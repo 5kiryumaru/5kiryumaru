@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendataan Siswa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .filter-section {
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        @media (max-width: 600px) {
+            th, td {
+                font-size: 12px;
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Form Pendataan Siswa</h2>
+    <form id="dataForm">
+        <div class="form-group">
+            <label>Nama Siswa:</label>
+            <input type="text" name="nama" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Kelas:</label>
+            <select name="kelas" required>
+                <option value="">Pilih Kelas</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Pembimbing:</label>
+            <input type="text" name="pembimbing" required>
+        </div>
+
+        <h3>Tahsin</h3>
+        <div class="form-group">
+            <label>Status Tahsin:</label>
+            <select name="tahsin">
+                <option value="Pemula">Pemula</option>
+                <option value="Lanjutan">Lanjutan</option>
+                <option value="Mumtaz">Mumtaz</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Halaman Tahsin:</label>
+            <input type="number" name="halaman_tahsin">
+        </div>
+
+        <div class="form-group">
+            <label>Nilai Tahsin:</label>
+            <input type="number" name="nilai_tahsin" step="0.1" min="0" max="100">
+        </div>
+
+        <h3>Tahfiz</h3>
+        <div class="form-group">
+            <label>Status Tahfiz:</label>
+            <select name="tahfiz">
+                <option value="Juz 1">Juz 1</option>
+                <option value="Juz 2">Juz 2</option>
+                <option value="Juz 3">Juz 3</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Ayat:</label>
+            <input type="text" name="ayat">
+        </div>
+
+        <div class="form-group">
+            <label>Nilai Tahfiz:</label>
+            <input type="number" name="nilai_tahfiz" step="0.1" min="0" max="100">
+        </div>
+
+        <button type="submit">Simpan Data</button>
+    </form>
+
+    <div class="filter-section">
+        <input type="text" id="searchInput" placeholder="Cari...">
+        <select id="filterKelas">
+            <option value="">Filter Kelas</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+        </select>
+        <select id="filterPembimbing">
+            <option value="">Filter Pembimbing</option>
+        </select>
+    </div>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>Kelas</th>
+                <th>Pembimbing</th>
+                <th>Tahsin</th>
+                <th>Halaman</th>
+                <th>Nilai</th>
+                <th>Tahfiz</th>
+                <th>Ayat</th>
+                <th>Nilai</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+
+    <script>
+        // Konfigurasi Google Sheets
+        const scriptURL = 'https://script.google.com/macros/library/d/1rfa74dMfzWzarN2sD18QzxzSdtgqcQfSl7vlA1CxTS5YZuwEX7Mnbm41/1';
+        
+        // Load data awal
+        document.addEventListener('DOMContentLoaded', loadData);
+
+        // Submit form
+        document.getElementById('dataForm').addEventListener('submit', e => {
+            e.preventDefault();
+            fetch(scriptURL, { method: 'POST', body: new FormData(e.target)})
+            .then(response => {
+                alert('Data berhasil disimpan!');
+                e.target.reset();
+                loadData();
+            })
+            .catch(error => console.error('Error!', error.message));
+        });
+
+        // Fungsi untuk memuat data
+        async function loadData() {
+            try {
+                const response = await fetch(scriptURL);
+                const data = await response.json();
+                updateTable(data);
+                updateFilters(data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Fungsi update tabel
+        function updateTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = data.map(row => `
+                <tr>
+                    <td>${row.nama}</td>
+                    <td>${row.kelas}</td>
+                    <td>${row.pembimbing}</td>
+                    <td>${row.tahsin}</td>
+                    <td>${row.halaman_tahsin}</td>
+                    <td>${row.nilai_tahsin}</td>
+                    <td>${row.tahfiz}</td>
+                    <td>${row.ayat}</td>
+                    <td>${row.nilai_tahfiz}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Fungsi filter dan pencarian
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        document.getElementById('filterKelas').addEventListener('change', filterData);
+        document.getElementById('filterPembimbing').addEventListener('change', filterData);
+
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterKelas = document.getElementById('filterKelas').value;
+            const filterPembimbing = document.getElementById('filterPembimbing').value;
+            
+            const rows = document.querySelectorAll('#tableBody tr');
+            
+            rows.forEach(row => {
+                const cells = row.cells;
+                const visible = 
+                    (cells[0].textContent.toLowerCase().includes(searchTerm) ||
+                     cells[2].textContent.toLowerCase().includes(searchTerm)) &&
+                    (filterKelas === '' || cells[1].textContent === filterKelas) &&
+                    (filterPembimbing === '' || cells[2].textContent === filterPembimbing);
+                
+                row.style.display = visible ? '' : 'none';
+            });
+        }
+
+        // Update filter pembimbing
+        function updateFilters(data) {
+            const pembimbingList = [...new Set(data.map(row => row.pembimbing))];
+            const select = document.getElementById('filterPembimbing');
+            select.innerHTML = '<option value="">Filter Pembimbing</option>' + 
+                pembimbingList.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+    </script>
+</body>
+</html>
